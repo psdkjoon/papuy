@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Papuy</string>
+    <string name="notification_channel">Notifications</string>
+    <string name="playback_channel">Background playback</string>
+    <string name="playback_playing">Playing</string>
+    <string name="playback_paused">Paused</string>
+    <string name="playback_pause">Pause</string>
+    <string name="playback_play">Play</string>
+    <string name="playback_next">Next</string>
+    <string name="playback_previous">Previous</string>
+    <string name="playback_shuffle">Shuffle</string>
+    <string name="playback_repeat">Repeat</string>
+    <string name="tile_off">Off</string>
+    <string name="tile_busy">Working…</string>
+    <string name="tile_on">On</string>
+</resources>

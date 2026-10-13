@@ -1,0 +1,220 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+  FLUTTER_VERSION: "3.47.3"
+  BUILD_TOOLS_VERSION: "37.0.0"
+  NDK_VERSION: "28.2.13676358"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Check VERSION matches the app
+        run: |
+          file_version="$(tr -d '[:space:]' < VERSION)"
+          app_version="$(grep -oP "version = '\K[^']+" lib/app_info.dart)"
+          pubspec_version="$(grep -oP '^version: \K[^+\s]+' pubspec.yaml)"
+          echo "VERSION=$file_version app_info=$app_version pubspec=$pubspec_version"
+          test -n "$file_version"
+          test "$file_version" = "$app_version"
+          test "$file_version" = "$pubspec_version"
+
+      - run: flutter pub get
+      - run: flutter analyze
+
+  android:
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read app info
+        run: |
+          title="$(sed -n "s/.*static const String name = '\([^']*\)'.*/\1/p" lib/app_info.dart | head -1)"
+          echo "APP_FILE=${title// /-}" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install Android build-tools & NDK
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          echo "Using sdkmanager: $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          for attempt in 1 2 3; do
+            if "$SDKMANAGER" \
+                "build-tools;${{ env.BUILD_TOOLS_VERSION }}" \
+                "ndk;${{ env.NDK_VERSION }}"; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "sdkmanager failed after $attempt attempts" >&2
+              exit 1
+            fi
+            echo "sdkmanager failed (attempt $attempt), retrying..." >&2
+            rm -rf "$ANDROID_HOME/ndk/${{ env.NDK_VERSION }}" \
+                   "$ANDROID_HOME/.temp" "$ANDROID_HOME/.downloadIntermediates"
+            sleep $((attempt * 15))
+          done
+          test -x "$ANDROID_HOME/ndk/${{ env.NDK_VERSION }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip"
+
+      - name: Decode keystore
+        if: env.HAS_KEYSTORE == 'true'
+        run: echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload-keystore.jks"
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+
+      - name: Write key.properties
+        if: env.HAS_KEYSTORE == 'true'
+        run: |
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=$RUNNER_TEMP/upload-keystore.jks
+          EOF
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+
+      - run: flutter pub get
+
+      - name: Compute versionCode
+        run: |
+          version="$(tr -d '[:space:]' < VERSION)"
+          IFS=. read -r major minor patch <<<"$version"
+          echo "VERSION_CODE=$((major * 1000000 + minor * 1000 + patch))" >> "$GITHUB_ENV"
+
+      - name: Build release APKs (universal + one per ABI)
+        run: |
+          out=build/app/outputs/flutter-apk
+          flutter build apk --release --build-number="$VERSION_CODE" --split-debug-info=build/symbols
+          mv "$out/app-release.apk" "$out/app-universal-release.apk"
+          for pair in arm64-v8a:android-arm64 armeabi-v7a:android-arm x86_64:android-x64; do
+            abi="${pair%%:*}"
+            platform="${pair##*:}"
+            flutter build apk --release --build-number="$VERSION_CODE" \
+              --target-platform "$platform" --split-debug-info=build/symbols
+            mv "$out/app-release.apk" "$out/app-$abi-release.apk"
+          done
+          ls -l "$out"
+
+      - name: Strip, zipalign & sign
+        if: env.HAS_KEYSTORE == 'true'
+        run: bash ./scripts/strip.sh
+        env:
+          APK_OUTPUT_DIR: build/app/outputs/flutter-apk
+          BUILD_TOOLS_DIR: ${{ env.ANDROID_HOME }}/build-tools/${{ env.BUILD_TOOLS_VERSION }}
+          STRIP_TOOL: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip
+          KEYSTORE_PATH: ${{ runner.temp }}/upload-keystore.jks
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Verify APK native libs per ABI
+        if: env.HAS_KEYSTORE == 'true'
+        run: bash ./scripts/verify-apk.sh
+        env:
+          APK_OUTPUT_DIR: build/app/outputs/flutter-apk
+          BUILD_TOOLS_DIR: ${{ env.ANDROID_HOME }}/build-tools/${{ env.BUILD_TOOLS_VERSION }}
+
+      - uses: actions/upload-artifact@v4
+        if: env.HAS_KEYSTORE == 'true'
+        with:
+          name: android-signed-apks
+          path: build/app/outputs/flutter-apk/${{ env.APP_FILE }}-*.apk
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: env.HAS_KEYSTORE != 'true'
+        with:
+          name: android-unsigned-apks
+          path: build/app/outputs/flutter-apk/app-*-release.apk
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-symbols
+          path: build/symbols
+          retention-days: 90
+          if-no-files-found: error
+
+  release:
+    needs: android
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read app info
+        run: |
+          title="$(sed -n "s/.*static const String name = '\([^']*\)'.*/\1/p" lib/app_info.dart | head -1)"
+          version="$(tr -d '[:space:]' < VERSION)"
+          echo "APP_TITLE=$title" >> "$GITHUB_ENV"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "TAG=v$version" >> "$GITHUB_ENV"
+
+      - name: Tag this commit
+        run: |
+          git tag -f "$TAG" "$GITHUB_SHA"
+          git push -f origin "refs/tags/$TAG"
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Require signed APKs
+        run: |
+          if ! ls artifacts/android-signed-apks/*.apk >/dev/null 2>&1; then
+            echo "::error::No signed APKs. Add ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD to the repository secrets."
+            exit 1
+          fi
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          name: ${{ env.APP_TITLE }} ${{ env.TAG }}
+          make_latest: true
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/android-signed-apks/*.apk

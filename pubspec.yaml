@@ -1,0 +1,53 @@
+name: papuy
+description: A simple, dependency-free video player for Android.
+publish_to: 'none'
+version: 1.0.0
+repository: https://github.com/psdkjoon/papuy
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icons/
+
+  fonts:
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
+          weight: 400
+        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
+          weight: 500
+        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
+          weight: 600
+        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
+          weight: 700
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/noto/NotoSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/noto/NotoSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/noto/NotoSans-Bold.ttf
+          weight: 700
+    - family: NotoSansArabic
+      fonts:
+        - asset: assets/fonts/noto/NotoSansArabic-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/noto/NotoSansArabic-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/noto/NotoSansArabic-Bold.ttf
+          weight: 700
