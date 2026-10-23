@@ -1,7 +1,7 @@
 abstract class AppInfo {
   static const String name = 'Papuy';
   static const String packageName = 'papuy';
-  static const String version = '2.0.0';
+  static const String version = '2.0.1';
   static const String author = 'Hossein';
 
   static const String githubHandle = 'psdkjoon';
