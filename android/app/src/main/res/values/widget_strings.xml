@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_idle">Nothing playing</string>
+    <string name="widget_square_label">Square player</string>
+    <string name="widget_bar_label">Slim player</string>
+    <string name="widget_wide_label">Wide player</string>
+    <string name="widget_button_label">Play button</string>
+    <string name="widget_square_description">Cover art with a play button</string>
+    <string name="widget_bar_description">Compact bar with a next button</string>
+    <string name="widget_wide_description">Full controls with progress, shuffle and repeat</string>
+    <string name="widget_button_description">One tap play and pause</string>
+    <string name="widget_preview_title">Song title</string>
+    <string name="widget_preview_artist">Artist</string>
+</resources>

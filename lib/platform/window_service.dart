@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:papuy/platform/media_service.dart';
@@ -9,26 +11,61 @@ abstract class WindowService {
   static final ValueNotifier<bool> playerOpen = ValueNotifier<bool>(false);
   static final ValueNotifier<int> homeRequests = ValueNotifier<int>(0);
   static final ValueNotifier<int> handoffRequests = ValueNotifier<int>(0);
+  static final ValueNotifier<int> playerRequests = ValueNotifier<int>(0);
+  static bool playerRequested = false;
 
-  static void Function(String name)? onCommand;
+  static void Function(String name)? _handler;
+  static String? startupCommand;
+
+  static set onCommand(void Function(String name)? handler) {
+    _handler = handler;
+    final waiting = startupCommand;
+    if (handler != null && waiting != null) {
+      startupCommand = null;
+      handler(waiting);
+    }
+  }
+
+  static void Function(String name)? get onCommand => _handler;
+
+  static void _dispatch(String name) {
+    final handler = _handler;
+    if (handler == null) {
+      startupCommand = name;
+    } else {
+      handler(name);
+    }
+  }
+
+  static void _command(String name) {
+    if (name == 'home') {
+      homeRequests.value++;
+    } else if (name == 'handoff') {
+      handoffRequests.value++;
+    } else if (name == 'openPlayer') {
+      playerRequested = true;
+      playerRequests.value++;
+    } else if (name == 'quickClosed') {
+      MediaService.quickRequest.value = null;
+    } else {
+      _dispatch(name);
+    }
+  }
 
   static void init() {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'pip') inPip.value = call.arguments == true;
       if (call.method == 'command' && call.arguments is String) {
-        final name = call.arguments as String;
-        if (name == 'home') {
-          homeRequests.value++;
-        } else if (name == 'handoff') {
-          handoffRequests.value++;
-        } else if (name == 'quickClosed') {
-          MediaService.quickRequest.value = null;
-        } else {
-          onCommand?.call(name);
-        }
+        _command(call.arguments as String);
       }
       return null;
     });
+    unawaited(_announceReady());
+  }
+
+  static Future<void> _announceReady() async {
+    final waiting = await _call<String>('ready');
+    if (waiting != null && waiting.isNotEmpty) _command(waiting);
   }
 
   static Future<T?> _call<T>(String method, [Object? arguments]) async {

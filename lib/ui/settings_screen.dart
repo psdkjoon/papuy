@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Text, Icon;
 import 'package:papuy/library/library_controller.dart';
 import 'package:papuy/localization/localization.dart';
 import 'package:papuy/platform/notification_service.dart';
+import 'package:papuy/platform/system_service.dart';
 import 'package:papuy/theme/catppuccin.dart';
 import 'package:papuy/settings/app_settings.dart';
 import 'package:papuy/settings/aspect_mode.dart';
@@ -12,6 +13,7 @@ import 'package:papuy/settings/sort_key.dart';
 import 'package:papuy/settings/subtitle_color.dart';
 import 'package:papuy/theme/app_motion.dart';
 import 'package:papuy/theme/app_spacing.dart';
+import 'package:papuy/ui/about_section.dart';
 import 'package:papuy/ui/language_sheet.dart';
 import 'package:papuy/ui/widgets/choice_tile.dart';
 import 'package:papuy/ui/widgets/page_frame.dart';
@@ -136,6 +138,14 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
         _AccentTile(settings: settings),
+        SwitchListTile(
+          title: const Text('Sync theme'),
+          subtitle: const Text(
+            'Use the same accent and theme in my other apps on this phone',
+          ),
+          value: settings.syncAppearance,
+          onChanged: (value) => settings.syncAppearance = value,
+        ),
         _ScaleTile(settings: settings),
         _GridTile(settings: settings),
         _switch(
@@ -283,7 +293,10 @@ class SettingsScreen extends StatelessWidget {
           settings.background,
           (value) {
             settings.background = value;
-            if (value) NotificationService.requestPermission();
+            if (value) {
+              NotificationService.requestPermission();
+              SystemService.requestBackgroundAccess();
+            }
           },
         ),
         _switch(
@@ -588,8 +601,9 @@ class SettingsScreen extends StatelessWidget {
                 _gestures(),
                 _subtitles(theme),
                 _audio(),
-                _updates(),
                 _data(context),
+                _updates(),
+                const AboutSection(),
               ],
             ),
           ),
@@ -611,7 +625,6 @@ class SettingsScreen extends StatelessWidget {
     if (picked != null) settings.language = picked;
   }
 }
-
 
 class _ScaleTile extends StatefulWidget {
   const _ScaleTile({required this.settings});
@@ -655,7 +668,6 @@ class _ScaleTileState extends State<_ScaleTile> {
     );
   }
 }
-
 
 class _AccentTile extends StatelessWidget {
   const _AccentTile({required this.settings});

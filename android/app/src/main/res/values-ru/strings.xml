@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Папуй</string>
+    <string name="notification_channel">Уведомления</string>
+    <string name="playback_channel">Фоновое воспроизведение</string>
+    <string name="playback_playing">Воспроизведение</string>
+    <string name="playback_paused">Пауза</string>
+    <string name="playback_pause">Пауза</string>
+    <string name="playback_play">Воспроизвести</string>
+    <string name="playback_next">Далее</string>
+    <string name="playback_previous">Назад</string>
+    <string name="playback_shuffle">Перемешать</string>
+    <string name="playback_repeat">Повтор</string>
+    <string name="tile_off">Выкл.</string>
+    <string name="tile_busy">Работает…</string>
+    <string name="tile_on">Вкл.</string>
+    <string name="share">Поделиться</string>
+    <string name="saved_to_downloads">Сохранено в «Загрузки»</string>
+</resources>

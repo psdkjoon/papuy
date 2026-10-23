@@ -26,6 +26,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["deepLinkScheme"] = "papuy"
+        manifestPlaceholders["appIcon"] =
+            (project.findProperty("appIcon") as String?) ?: "@mipmap/ic_launcher"
     }
 
     signingConfigs {

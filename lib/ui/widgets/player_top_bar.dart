@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Text, Icon;
 import 'package:papuy/localization/localization.dart';
 import 'package:papuy/player/player_controller.dart';
 import 'package:papuy/theme/app_spacing.dart';
+import 'package:papuy/theme/app_theme.dart';
 
 class PlayerTopBar extends StatelessWidget {
   const PlayerTopBar({
@@ -18,16 +19,20 @@ class PlayerTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final onVideo = theme.textTheme.bodyMedium?.copyWith(color: Colors.white);
+    final status = theme.extension<StatusColors>()!;
+    final onVideo = theme.textTheme.bodyMedium?.copyWith(color: status.onScrim);
     final clock = controller.settings.showClock
         ? TimeOfDay.now().format(context)
         : null;
     return DecoratedBox(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xAA000000), Color(0x00000000)],
+          colors: [
+            status.scrim.withValues(alpha: 0.67),
+            status.scrim.withValues(alpha: 0),
+          ],
         ),
       ),
       child: SafeArea(
@@ -35,6 +40,7 @@ class PlayerTopBar extends StatelessWidget {
         child: Row(
           children: [
             IconButton(
+              tooltip: 'Back'.tr,
               icon: const Icon(Icons.arrow_back_rounded),
               onPressed: () => Navigator.of(context).maybePop(),
             ),
@@ -55,10 +61,10 @@ class PlayerTopBar extends StatelessWidget {
                 ),
               ),
             if (controller.sleepAt != null)
-              const Icon(
+              Icon(
                 Icons.bedtime_outlined,
                 size: _iconSize,
-                color: Colors.white,
+                color: status.onScrim,
               ),
             if (clock != null)
               Padding(

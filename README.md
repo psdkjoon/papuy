@@ -19,7 +19,19 @@ flutter pub get
 flutter run
 ```
 
-The main manifest keeps a launcher entry on `MainActivity` because `flutter run` reads it to know which activity to start. The debug, profile and release manifests remove that entry when merging, so the installed app only shows the theme-switching icon.
+The app is Android only.
+
+## Launcher icons and accent
+
+There is one launcher icon per accent and theme (12 accents x Mocha and Latte), switched by `LauncherIcon.kt` from the accent and theme chosen in Settings. With "Sync theme" on, the accent and theme are shared with other apps built from the same template on the same phone.
+
+## Home screen widgets
+
+Four widgets: square, bar, wide and a button-only one. They show the current song, album art and the play, previous and next buttons. Pressing play on a Bluetooth device starts the song that was playing before, even if the app was closed.
+
+## Playlists
+
+Create, import from .m3u/.m3u8, export to Downloads or share as .m3u8, rename, delete and reorder.
 
 ## Release
 
@@ -38,12 +50,6 @@ lib/player/      PlayerController, track and subtitle models
 lib/platform/    channel wrappers: player, media, window, system
 android/.../     PlayerChannel, MediaChannel, WindowChannel, PlaybackService
 ```
-
-## Icons and fonts
-
-The launcher and logo PNGs are generated from `assets/icons/icon_mocha.svg` and `icon_latte.svg`.
-
-See the flutter-base README for the structure and the conventions this project follows.
 
 ## Quick play
 

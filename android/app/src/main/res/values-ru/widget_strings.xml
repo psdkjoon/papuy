@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_idle">Ничего не играет</string>
+    <string name="widget_square_label">Квадратный плеер</string>
+    <string name="widget_bar_label">Узкий плеер</string>
+    <string name="widget_wide_label">Широкий плеер</string>
+    <string name="widget_button_label">Кнопка воспроизведения</string>
+    <string name="widget_square_description">Обложка с кнопкой воспроизведения</string>
+    <string name="widget_bar_description">Компактная панель с кнопкой «Далее»</string>
+    <string name="widget_wide_description">Все кнопки, полоса прогресса, перемешивание и повтор</string>
+    <string name="widget_button_description">Воспроизведение и пауза одним касанием</string>
+    <string name="widget_preview_title">Название</string>
+    <string name="widget_preview_artist">Исполнитель</string>
+</resources>

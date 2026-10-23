@@ -102,10 +102,17 @@ Future<void> showPlayerMenu(
                   onTap: () => pick(_MenuAction.info),
                 ),
               ];
-              return Wrap(
-                spacing: gap,
-                runSpacing: gap,
-                children: [for (final tile in tiles) SizedBox(width: width, child: tile)],
+              return SizedBox(
+                width: double.infinity,
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  runAlignment: WrapAlignment.center,
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: [
+                    for (final tile in tiles) SizedBox(width: width, child: tile),
+                  ],
+                ),
               );
             },
           ),

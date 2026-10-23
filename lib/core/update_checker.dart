@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -80,15 +79,11 @@ abstract class UpdateChecker {
   static Future<String> _downloadUrl(String version) async {
     try {
       final key = await _deviceKey();
-      final extension = Platform.isAndroid
-          ? '.apk'
-          : Platform.isWindows
-              ? '.zip'
-              : '.appimage';
+      const extension = '.apk';
       if (key == null) return _releasePage(version);
       final release = jsonDecode(await _get(_releaseApi(version)));
       final assets = (release as Map<String, Object?>)['assets'] as List<Object?>;
-      for (final wanted in [key, if (Platform.isAndroid) 'universal']) {
+      for (final wanted in [key, 'universal']) {
         for (final asset in assets) {
           final map = asset as Map<String, Object?>;
           final name = '${map['name']}'.toLowerCase();
@@ -104,18 +99,7 @@ abstract class UpdateChecker {
   }
 
   static Future<String?> _deviceKey() async {
-    if (Platform.isAndroid) {
-      final abi = await SystemService.androidAbi();
-      return abi?.toLowerCase();
-    }
-    if (Platform.isWindows) return 'windows';
-    if (Platform.isLinux) {
-      final result = await Process.run('uname', ['-m']);
-      final machine = '${result.stdout}'.trim().toLowerCase();
-      if (machine == 'arm64' || machine == 'aarch64') return 'aarch64';
-      if (machine == 'x86_64' || machine == 'amd64') return 'x86_64';
-      return machine.isEmpty ? null : machine;
-    }
-    return null;
+    final abi = await SystemService.androidAbi();
+    return abi?.toLowerCase();
   }
 }

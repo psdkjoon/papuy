@@ -3,6 +3,7 @@ import 'package:papuy/library/library_controller.dart';
 import 'package:papuy/library/video_filter.dart';
 import 'package:papuy/library/video_item.dart';
 import 'package:papuy/localization/localization.dart';
+import 'package:papuy/player/music_controller.dart';
 import 'package:papuy/settings/app_settings.dart';
 import 'package:papuy/settings/sort_key.dart';
 import 'package:papuy/theme/app_motion.dart';
@@ -13,7 +14,6 @@ import 'package:papuy/ui/video_actions_sheet.dart';
 import 'package:papuy/ui/video_menu_sheet.dart';
 import 'package:papuy/ui/widgets/choice_sheet.dart';
 import 'package:papuy/ui/widgets/fade_slide_in.dart';
-import 'package:papuy/ui/widgets/home_header.dart';
 import 'package:papuy/ui/widgets/page_frame.dart';
 import 'package:papuy/ui/widgets/video_grid_tile.dart';
 import 'package:papuy/ui/widgets/video_tile.dart';
@@ -22,13 +22,13 @@ class VideosScreen extends StatefulWidget {
   const VideosScreen({
     required this.settings,
     required this.library,
-    required this.mode,
+    required this.music,
     super.key,
   });
 
   final AppSettings settings;
   final LibraryController library;
-  final ValueNotifier<int> mode;
+  final MusicController music;
 
   @override
   State<VideosScreen> createState() => _VideosScreenState();
@@ -114,7 +114,12 @@ class _VideosScreenState extends State<VideosScreen> {
       ];
     }
     return [
-      Expanded(child: ModeSwitch(mode: widget.mode)),
+      Expanded(
+        child: Text(
+          'Videos',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+      ),
       IconButton(
         tooltip: 'Search'.tr,
         icon: const Icon(Icons.search_rounded),
@@ -124,11 +129,6 @@ class _VideosScreenState extends State<VideosScreen> {
         tooltip: 'More'.tr,
         icon: const Icon(Icons.more_vert_rounded),
         onPressed: _openMenu,
-      ),
-      ...HomeHeader.trailing(
-        context,
-        settings: _settings,
-        library: _library,
       ),
     ];
   }

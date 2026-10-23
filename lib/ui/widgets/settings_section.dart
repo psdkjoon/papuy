@@ -22,7 +22,7 @@ class SettingsSection extends StatelessWidget {
       spacing: AppSpacing.sm,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: AppSpacing.md),
+          padding: const EdgeInsetsDirectional.only(start: AppSpacing.md),
           child: Row(
             spacing: AppSpacing.xxs,
             children: [
@@ -35,7 +35,6 @@ class SettingsSection extends StatelessWidget {
                 IconButton(
                   tooltip: 'What does this do?'.tr,
                   iconSize: 18,
-                  visualDensity: VisualDensity.compact,
                   icon: const Icon(Icons.help_outline_rounded),
                   onPressed: () => showDialog<void>(
                     context: context,

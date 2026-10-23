@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart' show MethodChannel;
-import 'package:papuy/app_info.dart';
 
 abstract class AppDirs {
   static const _channel = MethodChannel('papuy/paths');
@@ -10,31 +9,11 @@ abstract class AppDirs {
   static Future<String> data() async {
     final cached = _data;
     if (cached != null) return cached;
-    final String path;
-    if (Platform.isAndroid) {
-      final paths = await _channel.invokeMapMethod<String, String>('resolve');
-      path = paths?['filesDir'] ?? Directory.systemTemp.path;
-    } else if (Platform.isWindows) {
-      final base = Platform.environment['APPDATA'] ??
-          Platform.environment['USERPROFILE'] ??
-          Directory.systemTemp.path;
-      path = '$base\\${AppInfo.packageName}';
-    } else {
-      final base = Platform.environment['XDG_DATA_HOME'] ??
-          '${Platform.environment['HOME']}/.local/share';
-      path = '$base/${AppInfo.packageName}';
-    }
+    final paths = await _channel.invokeMapMethod<String, String>('resolve');
+    final path = paths?['filesDir'] ?? Directory.systemTemp.path;
     await Directory(path).create(recursive: true);
     return _data = path;
   }
 
-  static Future<String> downloads() async {
-    if (Platform.isAndroid) return data();
-    final home = (Platform.isWindows
-            ? Platform.environment['USERPROFILE']
-            : Platform.environment['HOME']) ??
-        Directory.systemTemp.path;
-    final dir = Directory('$home/Downloads');
-    return await dir.exists() ? dir.path : home;
-  }
+  static Future<String> downloads() => data();
 }

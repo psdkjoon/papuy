@@ -8,9 +8,13 @@ class PlayerActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             WindowChannel.ACTION_TOGGLE -> {
-                PlayerChannel.toggle()
-                WindowChannel.refreshPip()
-                PlaybackService.refresh(context)
+                if (PlayerChannel.hasPlayer()) {
+                    PlayerChannel.toggle()
+                    WindowChannel.refreshPip()
+                    PlaybackService.refresh(context)
+                } else {
+                    WindowChannel.requestCommand(context, "play")
+                }
             }
             WindowChannel.ACTION_NEXT -> WindowChannel.sendCommand("next")
             WindowChannel.ACTION_PREVIOUS -> WindowChannel.sendCommand("previous")

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:papuy/core/kv_store.dart';
+import 'package:papuy/library/art_cache.dart';
 import 'package:papuy/library/favorites.dart';
 import 'package:papuy/library/video_filter.dart';
 import 'package:papuy/library/track_item.dart';
@@ -32,6 +33,7 @@ class LibraryController extends ChangeNotifier {
   Future<void> load({bool ask = false}) async {
     status = LibraryStatus.loading;
     notifyListeners();
+    ArtCache.clear();
     var granted = await MediaService.hasPermission();
     if (!granted && ask) granted = await MediaService.requestPermission();
     if (!granted) {

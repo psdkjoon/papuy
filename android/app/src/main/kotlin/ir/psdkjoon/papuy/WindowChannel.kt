@@ -36,6 +36,12 @@ object WindowChannel {
     private var autoPip = false
     private var inPip = false
 
+    @Volatile
+    private var dartReady = false
+
+    @Volatile
+    private var pendingCommand: String? = null
+
     fun register(engine: FlutterEngine, context: Context) {
         appContext = context.applicationContext
         channel = MethodChannel(engine.dartExecutor.binaryMessenger, CHANNEL)
@@ -48,6 +54,12 @@ object WindowChannel {
 
     private fun handle(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
+            "ready" -> {
+                dartReady = true
+                val waiting = pendingCommand
+                pendingCommand = null
+                result.success(waiting)
+            }
             "getBrightness" -> result.success(brightness())
             "setBrightness" -> {
                 setBrightness((call.argument<Number>("value") ?: -1).toFloat())
@@ -200,6 +212,15 @@ object WindowChannel {
         if (autoPip && Build.VERSION.SDK_INT in 26..30) enterPip()
     }
 
+    fun requestCommand(context: Context, name: String) {
+        EngineHolder.ensure(context)
+        if (dartReady) {
+            android.os.Handler(android.os.Looper.getMainLooper()).post { sendCommand(name) }
+        } else {
+            pendingCommand = name
+        }
+    }
+
     fun sendCommand(name: String) {
         if (!::channel.isInitialized) return
         channel.invokeMethod("command", name)
@@ -207,6 +228,7 @@ object WindowChannel {
 
     fun notifyPip(active: Boolean) {
         inPip = active
+        if (!::channel.isInitialized) return
         channel.invokeMethod("pip", active)
     }
 }

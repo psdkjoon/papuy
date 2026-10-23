@@ -21,8 +21,13 @@ class TrackListPage extends StatelessWidget {
   final MusicController music;
   final bool showAlbum;
 
-  Future<void> _play(BuildContext context, List<TrackItem> list, int index) async {
-    await music.playQueue(list, index);
+  Future<void> _play(
+    BuildContext context,
+    List<TrackItem> list,
+    int index, {
+    bool resume = false,
+  }) async {
+    await music.playQueue(list, index, resume: resume);
     if (context.mounted) await NowPlayingScreen.open(context, music);
   }
 
@@ -81,7 +86,7 @@ class TrackListPage extends StatelessWidget {
                     showAlbum: showAlbum,
                     current: music.track == item,
                     playing: music.playing,
-                    onTap: () => _play(context, list, i),
+                    onTap: () => _play(context, list, i, resume: true),
                     onLongPress: () => showTrackActions(context, music, item),
                   );
                 },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Text, Icon;
 import 'package:papuy/localization/localization.dart';
 import 'package:papuy/settings/app_settings.dart';
 import 'package:papuy/theme/app_spacing.dart';
+import 'package:papuy/theme/app_theme.dart';
 
 class SubtitleOverlay extends StatelessWidget {
   const SubtitleOverlay({
@@ -25,7 +26,9 @@ class SubtitleOverlay extends StatelessWidget {
         alignment: Alignment(0, vertical),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: boxed ? Colors.black.withValues(alpha: 0.65) : null,
+            color: boxed
+                ? theme.extension<StatusColors>()!.scrim.withValues(alpha: 0.65)
+                : null,
             borderRadius: BorderRadius.circular(AppRadius.tile / 4),
           ),
           child: Padding(

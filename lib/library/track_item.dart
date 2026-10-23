@@ -11,6 +11,7 @@ class TrackItem {
     required this.added,
     required this.number,
     required this.uri,
+    this.path = '',
   });
 
   factory TrackItem.fromMap(Map<Object?, Object?> map) {
@@ -28,6 +29,7 @@ class TrackItem {
       added: (map['added'] as num?)?.toInt() ?? 0,
       number: (map['track'] as num?)?.toInt() ?? 0,
       uri: (map['uri'] as String?) ?? '',
+      path: (map['path'] as String?) ?? '',
     );
   }
 
@@ -89,16 +91,21 @@ class TrackItem {
   final int added;
   final int number;
   final String uri;
+  final String path;
 
   bool get isExternal => id < 0;
+
+  @override
+  bool operator ==(Object other) => other is TrackItem && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
 
   Duration get duration => Duration(milliseconds: durationMs);
 
   String get artistLabel => artist.isEmpty ? 'Unknown artist' : artist;
 
   String get albumLabel => album.isEmpty ? 'Unknown album' : album;
-
-  String get artKey => albumId > 0 ? 'a$albumId' : 't$id';
 
   String get subtitle {
     if (artist.isEmpty && album.isEmpty) return '';

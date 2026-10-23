@@ -18,7 +18,6 @@ import 'package:papuy/ui/track_actions_sheet.dart';
 import 'package:papuy/ui/track_list_page.dart';
 import 'package:papuy/ui/widgets/choice_sheet.dart';
 import 'package:papuy/ui/widgets/fade_slide_in.dart';
-import 'package:papuy/ui/widgets/home_header.dart';
 import 'package:papuy/ui/widgets/page_frame.dart';
 import 'package:papuy/ui/widgets/sub_page.dart';
 import 'package:papuy/ui/widgets/track_art.dart';
@@ -31,14 +30,12 @@ class MusicScreen extends StatefulWidget {
     required this.settings,
     required this.library,
     required this.music,
-    required this.mode,
     super.key,
   });
 
   final AppSettings settings;
   final LibraryController library;
   final MusicController music;
-  final ValueNotifier<int> mode;
 
   @override
   State<MusicScreen> createState() => _MusicScreenState();
@@ -81,7 +78,12 @@ class _MusicScreenState extends State<MusicScreen> {
       ];
     }
     return [
-      Expanded(child: ModeSwitch(mode: widget.mode)),
+      Expanded(
+        child: Text(
+          'Music',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+      ),
       IconButton(
         tooltip: 'Search'.tr,
         icon: const Icon(Icons.search_rounded),
@@ -93,11 +95,6 @@ class _MusicScreenState extends State<MusicScreen> {
           icon: const Icon(Icons.sort_rounded),
           onPressed: _pickSort,
         ),
-      ...HomeHeader.trailing(
-        context,
-        settings: widget.settings,
-        library: _library,
-      ),
     ];
   }
 
@@ -151,7 +148,7 @@ class _MusicScreenState extends State<MusicScreen> {
   }
 
   Future<void> _play(List<TrackItem> list, int index) async {
-    await _music.playQueue(list, index);
+    await _music.playQueue(list, index, resume: true);
     if (mounted) await NowPlayingScreen.open(context, _music);
   }
 
@@ -164,6 +161,7 @@ class _MusicScreenState extends State<MusicScreen> {
     SubPage.open(
       context,
       title: title,
+      music: _music,
       child: TrackListPage(tracks: list, music: _music),
     );
   }

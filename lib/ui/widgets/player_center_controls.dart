@@ -20,6 +20,7 @@ class PlayerCenterControls extends StatelessWidget {
       spacing: AppSpacing.xl,
       children: [
         IconButton(
+          tooltip: 'Previous'.tr,
           iconSize: _skipSize,
           icon: const Icon(Icons.skip_previous_rounded),
           onPressed: controller.hasPrevious
@@ -27,6 +28,7 @@ class PlayerCenterControls extends StatelessWidget {
               : null,
         ),
         IconButton.filled(
+          tooltip: controller.playing ? 'Pause'.tr : 'Play'.tr,
           iconSize: _playSize,
           style: IconButton.styleFrom(
             backgroundColor: scheme.primary,
@@ -41,6 +43,7 @@ class PlayerCenterControls extends StatelessWidget {
           onPressed: controller.togglePlay,
         ),
         IconButton(
+          tooltip: 'Next'.tr,
           iconSize: _skipSize,
           icon: const Icon(Icons.skip_next_rounded),
           onPressed: controller.hasNext

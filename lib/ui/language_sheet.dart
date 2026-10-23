@@ -7,14 +7,14 @@ import 'package:papuy/theme/app_text_style.dart';
 const _glyphs = {
   'en': 'Aa',
   'fa': 'ف',
-  'ja': 'あ',
   'ru': 'Я',
+  'ja': 'あ',
 };
 
 const _families = {
   'fa': 'NotoSansArabic',
   'ru': 'NotoSans',
-  'ja': 'NotoSans',
+  'ja': 'NotoSansJP',
 };
 
 Future<String?> showLanguageSheet(BuildContext context, String current) {
@@ -139,11 +139,8 @@ class _LanguageCard extends StatelessWidget {
             )
           : w.Text(
               glyph!,
-              style: TextStyle(
+              style: theme.textTheme.titleLarge?.copyWith(
                 fontFamily: family ?? 'SpaceGrotesk',
-                fontFamilyFallback: AppTextStyle.fontFallback,
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
                 color: chosen ? scheme.onPrimary : scheme.onSurfaceVariant,
               ),
             ),

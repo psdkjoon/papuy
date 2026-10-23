@@ -1,8 +1,8 @@
 package ir.psdkjoon.papuy
 
+import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
@@ -27,6 +27,8 @@ class MainActivity : FlutterActivity() {
                 MediaChannel.deliver(intent)
             }
             announceHandoff(intent)
+            announceOpenPlayer(intent)
+            handleIncoming(intent)
         }
     }
 
@@ -35,22 +37,44 @@ class MainActivity : FlutterActivity() {
         setIntent(intent)
         MediaChannel.deliver(intent)
         announceHandoff(intent)
-    }
-
-    private fun announceHandoff(intent: Intent?) {
-        if (intent?.getBooleanExtra(EXTRA_HANDOFF, false) == true) {
-            intent.removeExtra(EXTRA_HANDOFF)
-            WindowChannel.sendCommand("handoff")
-        }
-    }
-
-    companion object {
-        const val EXTRA_HANDOFF = "ir.psdkjoon.papuy.HANDOFF"
+        announceOpenPlayer(intent)
+        handleIncoming(intent)
     }
 
     override fun onPostResume() {
         super.onPostResume()
         EngineHolder.activity = this
+        EngineHolder.installIfWaiting()
+    }
+
+    private var taskLabel: String? = null
+    private var taskColor = 0
+
+    @Suppress("DEPRECATION")
+    override fun setTaskDescription(taskDescription: ActivityManager.TaskDescription?) {
+        if (taskDescription != null) {
+            taskLabel = taskDescription.label
+            taskColor = taskDescription.primaryColor
+        }
+        super.setTaskDescription(withIcon(taskLabel, taskColor))
+    }
+
+    fun refreshTaskDescription() {
+        super.setTaskDescription(withIcon(taskLabel, taskColor))
+    }
+
+    @Suppress("DEPRECATION")
+    private fun withIcon(label: String?, color: Int): ActivityManager.TaskDescription {
+        val icon = LauncherIcon.currentIconRes(this)
+        return if (android.os.Build.VERSION.SDK_INT >= 33) {
+            ActivityManager.TaskDescription.Builder()
+                .setLabel(label)
+                .setIcon(icon)
+                .setPrimaryColor(color)
+                .build()
+        } else {
+            ActivityManager.TaskDescription(label, icon, color)
+        }
     }
 
     override fun onUserLeaveHint() {
@@ -68,6 +92,7 @@ class MainActivity : FlutterActivity() {
 
     @Suppress("DEPRECATION")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        FileService.onResult(this, requestCode, resultCode, data)
         super.onActivityResult(requestCode, resultCode, data)
         MediaChannel.onActivityResult(requestCode, resultCode, data)
     }
@@ -77,11 +102,12 @@ class MainActivity : FlutterActivity() {
         permissions: Array<out String>,
         grantResults: IntArray,
     ) {
+        PermissionService.onResult(requestCode, grantResults)
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == MediaChannel.REQUEST_PERMISSION) {
             MediaChannel.onPermissionResult(
                 grantResults.isNotEmpty() &&
-                    grantResults.all { it == PackageManager.PERMISSION_GRANTED },
+                    grantResults.all { it == android.content.pm.PackageManager.PERMISSION_GRANTED },
             )
         }
     }
@@ -89,5 +115,29 @@ class MainActivity : FlutterActivity() {
     override fun onDestroy() {
         if (EngineHolder.activity === this) EngineHolder.activity = null
         super.onDestroy()
+    }
+
+    private fun announceHandoff(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_HANDOFF, false) == true) {
+            intent.removeExtra(EXTRA_HANDOFF)
+            WindowChannel.sendCommand("handoff")
+        }
+    }
+
+    private fun announceOpenPlayer(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_OPEN_PLAYER, false) == true) {
+            intent.removeExtra(EXTRA_OPEN_PLAYER)
+            WindowChannel.requestCommand(this, "openPlayer")
+        }
+    }
+
+    private fun handleIncoming(intent: Intent?) {
+        DeepLinkHandler.handle(intent)
+        ShareService.handle(this, intent)
+    }
+
+    companion object {
+        const val EXTRA_HANDOFF = "ir.psdkjoon.papuy.HANDOFF"
+        const val EXTRA_OPEN_PLAYER = "ir.psdkjoon.papuy.OPEN_PLAYER"
     }
 }

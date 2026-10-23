@@ -9,6 +9,7 @@ import 'package:papuy/settings/music_sort.dart';
 import 'package:papuy/settings/sort_key.dart';
 import 'package:papuy/settings/subtitle_color.dart';
 import 'package:papuy/theme/app_motion.dart';
+import 'package:papuy/theme/catppuccin.dart';
 
 class AppSettings extends ChangeNotifier {
   AppSettings._(this._prefs) {
@@ -74,6 +75,8 @@ class AppSettings extends ChangeNotifier {
     'musicVisualizer',
     'musicSort',
     'accent',
+    'accentUpdatedAt',
+    'syncAccent',
     'animations',
     'gridSize',
     'haptics',
@@ -114,7 +117,9 @@ class AppSettings extends ChangeNotifier {
   bool _musicShuffle = false;
   bool _musicRestore = true;
   bool _musicVisualizer = true;
-  String _accent = 'mauve';
+  String _accent = CatppuccinPalette.defaultAccent;
+  int _appearanceUpdatedAt = 0;
+  bool _syncAppearance = true;
   bool _animations = true;
   int _gridSize = 240;
   bool _haptics = true;
@@ -165,11 +170,14 @@ class AppSettings extends ChangeNotifier {
   bool get showClock => _showClock;
   bool get showRemaining => _showRemaining;
   bool get checkUpdates => _checkUpdates;
+  bool get backgroundAsked => _prefs.getBool('backgroundAsked') ?? false;
   int get speed => _speed;
   bool get musicShuffle => _musicShuffle;
   bool get musicRestore => _musicRestore;
   bool get musicVisualizer => _musicVisualizer;
   String get accent => _accent;
+  int get appearanceUpdatedAt => _appearanceUpdatedAt;
+  bool get syncAppearance => _syncAppearance;
   bool get animations => _animations;
   int get gridSize => _gridSize;
   bool get haptics => _haptics;
@@ -190,8 +198,11 @@ class AppSettings extends ChangeNotifier {
   FloatShape get floatShape => _floatShape;
   SubtitleColor get subtitleColor => _subtitleColor;
 
-  set themeMode(ThemeMode value) =>
-      _set(() => _themeMode = value, 'themeMode', value.name);
+  set themeMode(ThemeMode value) {
+    if (value == _themeMode) return;
+    _stamp();
+    _set(() => _themeMode = value, 'themeMode', value.name);
+  }
 
   set language(String value) {
     _language = value;
@@ -278,13 +289,43 @@ class AppSettings extends ChangeNotifier {
   set showRemaining(bool value) =>
       _set(() => _showRemaining = value, 'showRemaining', value);
 
+  set backgroundAsked(bool value) => _prefs.setBool('backgroundAsked', value);
+
   set checkUpdates(bool value) =>
       _set(() => _checkUpdates = value, 'checkUpdates', value);
 
   set speed(int value) =>
       _set(() => _speed = value, 'speed', value);
 
-  set accent(String value) => _set(() => _accent = value, 'accent', value);
+  set accent(String value) {
+    if (value == _accent && _appearanceUpdatedAt != 0) return;
+    _stamp();
+    _set(() => _accent = value, 'accent', value);
+  }
+
+  set syncAppearance(bool value) =>
+      _set(() => _syncAppearance = value, 'syncAccent', value);
+
+  void _stamp() {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    _appearanceUpdatedAt =
+        now > _appearanceUpdatedAt ? now : _appearanceUpdatedAt + 1;
+    _prefs.setInt('accentUpdatedAt', _appearanceUpdatedAt);
+  }
+
+  void adoptAppearance(String accent, String? mode, int updatedAt) {
+    if (!CatppuccinPalette.accents.contains(accent)) return;
+    if (updatedAt <= _appearanceUpdatedAt) return;
+    _accent = accent;
+    if (mode != null) _themeMode = _byName(ThemeMode.values, mode, _themeMode);
+    _appearanceUpdatedAt = updatedAt;
+    _prefs.setString('accent', accent);
+    _prefs.setString('themeMode', _themeMode.name);
+    _prefs.setInt('accentUpdatedAt', updatedAt);
+    notifyListeners();
+  }
+
+  Future<void> flush() => _prefs.flush();
 
   set animations(bool value) => _set(() {
         _animations = value;
@@ -297,7 +338,6 @@ class AppSettings extends ChangeNotifier {
 
   set quickPlay(bool value) =>
       _set(() => _quickPlay = value, 'quickPlay', value);
-
 
   set musicVisualizer(bool value) =>
       _set(() => _musicVisualizer = value, 'musicVisualizer', value);
@@ -398,7 +438,12 @@ class AppSettings extends ChangeNotifier {
     _musicShuffle = _prefs.getBool('musicShuffle') ?? false;
     _musicRestore = _prefs.getBool('musicRestore') ?? true;
     _musicVisualizer = _prefs.getBool('musicVisualizer') ?? true;
-    _accent = _prefs.getString('accent') ?? 'mauve';
+    final accent = _prefs.getString('accent');
+    _accent = accent != null && CatppuccinPalette.accents.contains(accent)
+        ? accent
+        : CatppuccinPalette.defaultAccent;
+    _appearanceUpdatedAt = _prefs.getInt('accentUpdatedAt') ?? 0;
+    _syncAppearance = _prefs.getBool('syncAccent') ?? true;
     _animations = _prefs.getBool('animations') ?? true;
     AppMotion.enabled = _animations;
     _gridSize = _prefs.getInt('gridSize') ?? 240;

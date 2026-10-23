@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_idle">پخشی در کار نیست</string>
+    <string name="widget_square_label">پخش‌کنندهٔ چهارگوش</string>
+    <string name="widget_bar_label">پخش‌کنندهٔ باریک</string>
+    <string name="widget_wide_label">پخش‌کنندهٔ پهن</string>
+    <string name="widget_button_label">دکمهٔ پخش</string>
+    <string name="widget_square_description">جلد آهنگ با دکمهٔ پخش</string>
+    <string name="widget_bar_description">نوار فشرده با دکمهٔ بعدی</string>
+    <string name="widget_wide_description">همهٔ کنترل‌ها با نوار پیشرفت، درهم و تکرار</string>
+    <string name="widget_button_description">پخش و مکث با یک لمس</string>
+    <string name="widget_preview_title">نام آهنگ</string>
+    <string name="widget_preview_artist">هنرمند</string>
+</resources>

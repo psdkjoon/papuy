@@ -4,6 +4,7 @@ import 'package:papuy/library/track_item.dart';
 import 'package:papuy/localization/localization.dart';
 import 'package:papuy/platform/media_service.dart';
 import 'package:papuy/player/music_controller.dart';
+import 'package:papuy/theme/app_spacing.dart';
 import 'package:papuy/ui/details_dialog.dart';
 import 'package:papuy/ui/playlist_picker.dart';
 import 'package:papuy/ui/widgets/favorite_button.dart';
@@ -38,7 +39,10 @@ Future<void> showTrackActions(
                   final favorite = music.data.isFavorite(track.id);
                   void toggle() => music.data.toggleFavorite(track.id);
                   return ListTile(
-                    contentPadding: const EdgeInsets.only(left: 6, right: 16),
+                    contentPadding: const EdgeInsetsDirectional.only(
+                      start: AppSpacing.xxs,
+                      end: AppSpacing.md,
+                    ),
                     leading: FavoriteButton(
                       favorite: favorite,
                       size: 22,

@@ -14,6 +14,7 @@ import 'package:papuy/player/player_controller.dart';
 import 'package:papuy/settings/app_settings.dart';
 import 'package:papuy/theme/app_motion.dart';
 import 'package:papuy/theme/app_spacing.dart';
+import 'package:papuy/theme/app_theme.dart';
 import 'package:papuy/ui/widgets/animated_play_icon.dart';
 import 'package:papuy/ui/widgets/player_surface_view.dart';
 import 'package:papuy/ui/widgets/track_art.dart';
@@ -38,6 +39,7 @@ class QuickShell extends StatefulWidget {
 
 class _QuickShellState extends State<QuickShell> {
   static const double _maxWidth = 480;
+  static const double _balanceWidth = 96;
 
   late final bool _audio =
       TrackItem.isAudioFile(widget.request.name, widget.request.mime);
@@ -214,7 +216,7 @@ class _QuickShellState extends State<QuickShell> {
                       : AnimatedPlayIcon(playing: _music.playing),
                   onPressed: _music.togglePlay,
                 ),
-                const SizedBox(width: 96),
+                const SizedBox(width: _balanceWidth),
               ],
             ),
           ],
@@ -248,7 +250,9 @@ class _QuickShellState extends State<QuickShell> {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        const ColoredBox(color: Colors.black),
+                        ColoredBox(
+                          color: theme.extension<StatusColors>()!.scrim,
+                        ),
                         PlayerSurfaceView(controller: controller),
                         GestureDetector(
                           behavior: HitTestBehavior.opaque,
@@ -260,8 +264,9 @@ class _QuickShellState extends State<QuickShell> {
                           Center(
                             child: Text(
                               "Can't play this video",
-                              style: theme.textTheme.bodyMedium
-                                  ?.copyWith(color: Colors.white),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.extension<StatusColors>()!.onScrim,
+                              ),
                             ),
                           ),
                       ],
@@ -320,7 +325,10 @@ class _QuickShellState extends State<QuickShell> {
                 behavior: HitTestBehavior.opaque,
                 onTap: _dismiss,
                 child: ColoredBox(
-                  color: Colors.black.withValues(alpha: 0.5 * value),
+                  color: theme
+                      .extension<StatusColors>()!
+                      .scrim
+                      .withValues(alpha: 0.5 * value),
                 ),
               ),
               Align(

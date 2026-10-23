@@ -11,18 +11,30 @@ class StatusColors extends ThemeExtension<StatusColors> {
     required this.success,
     required this.warning,
     required this.heart,
+    required this.scrim,
+    required this.onScrim,
   });
 
   final Color success;
   final Color warning;
   final Color heart;
+  final Color scrim;
+  final Color onScrim;
 
   @override
-  StatusColors copyWith({Color? success, Color? warning, Color? heart}) {
+  StatusColors copyWith({
+    Color? success,
+    Color? warning,
+    Color? heart,
+    Color? scrim,
+    Color? onScrim,
+  }) {
     return StatusColors(
       success: success ?? this.success,
       warning: warning ?? this.warning,
       heart: heart ?? this.heart,
+      scrim: scrim ?? this.scrim,
+      onScrim: onScrim ?? this.onScrim,
     );
   }
 
@@ -33,6 +45,8 @@ class StatusColors extends ThemeExtension<StatusColors> {
       success: Color.lerp(success, other.success, t)!,
       warning: Color.lerp(warning, other.warning, t)!,
       heart: Color.lerp(heart, other.heart, t)!,
+      scrim: Color.lerp(scrim, other.scrim, t)!,
+      onScrim: Color.lerp(onScrim, other.onScrim, t)!,
     );
   }
 }
@@ -101,7 +115,15 @@ abstract class AppTheme {
       fontFamily: AppTextStyle.fontFamily,
       fontFamilyFallback: AppTextStyle.fontFallback,
       textTheme: AppTextStyle.textTheme,
-      extensions: [StatusColors(success: c.green, warning: c.peach, heart: c.pink)],
+      extensions: [
+        StatusColors(
+          success: c.green,
+          warning: c.peach,
+          heart: c.pink,
+          scrim: CatppuccinPalette.mocha.crust,
+          onScrim: CatppuccinPalette.mocha.text,
+        ),
+      ],
       cardTheme: CardThemeData(
         color: scheme.surfaceContainerLow,
         elevation: 0,

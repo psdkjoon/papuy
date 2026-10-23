@@ -5,7 +5,7 @@ import 'package:papuy/library/art_cache.dart';
 import 'package:papuy/library/track_item.dart';
 import 'package:papuy/localization/localization.dart';
 
-class TrackArt extends StatelessWidget {
+class TrackArt extends StatefulWidget {
   const TrackArt({
     required this.track,
     this.size,
@@ -20,7 +20,28 @@ class TrackArt extends StatelessWidget {
   final int pixels;
 
   @override
+  State<TrackArt> createState() => _TrackArtState();
+}
+
+class _TrackArtState extends State<TrackArt> {
+  late Future<Uint8List?> _future = _load();
+
+  Future<Uint8List?> _load() =>
+      ArtCache.of(widget.track, size: widget.pixels);
+
+  @override
+  void didUpdateWidget(TrackArt oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.track.id != widget.track.id ||
+        oldWidget.pixels != widget.pixels) {
+      _future = _load();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final track = widget.track;
+    final radius = widget.radius;
     final scheme = Theme.of(context).colorScheme;
     final tints = <Color>[scheme.primary, scheme.secondary, scheme.tertiary];
     final first = tints[track.albumId.abs() % tints.length];
@@ -56,21 +77,18 @@ class TrackArt extends StatelessWidget {
             ),
           ),
           FutureBuilder<Uint8List?>(
-            future: ArtCache.of(track, size: pixels),
+            key: ValueKey<int>(track.id),
+            future: _future,
             builder: (context, snapshot) {
               final bytes = snapshot.data;
               if (bytes == null) return const SizedBox.shrink();
-              return Image.memory(
-                bytes,
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-              );
+              return Image.memory(bytes, fit: BoxFit.cover);
             },
           ),
         ],
       ),
     );
-    final fixed = size;
+    final fixed = widget.size;
     if (fixed == null) return AspectRatio(aspectRatio: 1, child: art);
     return SizedBox(width: fixed, height: fixed, child: art);
   }

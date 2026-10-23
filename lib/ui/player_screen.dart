@@ -6,6 +6,7 @@ import 'package:papuy/player/player_controller.dart';
 import 'package:papuy/platform/window_service.dart';
 import 'package:papuy/settings/app_settings.dart';
 import 'package:papuy/theme/app_spacing.dart';
+import 'package:papuy/theme/app_theme.dart';
 import 'package:papuy/ui/player_menu_sheet.dart';
 import 'package:papuy/ui/player_speed_sheet.dart';
 import 'package:papuy/ui/track_sheet.dart';
@@ -97,6 +98,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
+  StatusColors get _status => Theme.of(context).extension<StatusColors>()!;
+
   Widget _failure() {
     return Center(
       child: Column(
@@ -107,7 +110,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
-                ?.copyWith(color: Colors.white),
+                ?.copyWith(color: _status.onScrim),
           ),
           TextButton(onPressed: _controller.open, child: const Text('Retry')),
         ],
@@ -122,7 +125,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         child: Text(
           text,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: Colors.white,
+            color: _status.onScrim,
             shadows: const [Shadow(blurRadius: 6)],
           ),
         ),
@@ -132,10 +135,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   Widget _lockButton() {
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: IconButton.filledTonal(
+          tooltip: 'Unlock'.tr,
           icon: const Icon(Icons.lock_rounded),
           onPressed: _controller.toggleLock,
         ),
@@ -153,7 +157,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
           type: MaterialType.transparency,
           child: IconButtonTheme(
             data: IconButtonThemeData(
-              style: IconButton.styleFrom(foregroundColor: Colors.white),
+              style: IconButton.styleFrom(foregroundColor: _status.onScrim),
             ),
             child: Stack(
               children: [
@@ -188,7 +192,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: _status.scrim,
       body: LayoutBuilder(
         builder: (context, box) {
           return ListenableBuilder(

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">پاپوی</string>
+    <string name="notification_channel">اعلان‌ها</string>
+    <string name="playback_channel">پخش در پس‌زمینه</string>
+    <string name="playback_playing">در حال پخش</string>
+    <string name="playback_paused">مکث شده</string>
+    <string name="playback_pause">مکث</string>
+    <string name="playback_play">پخش</string>
+    <string name="playback_next">بعدی</string>
+    <string name="playback_previous">قبلی</string>
+    <string name="playback_shuffle">درهم</string>
+    <string name="playback_repeat">تکرار</string>
+    <string name="tile_off">خاموش</string>
+    <string name="tile_busy">در حال کار…</string>
+    <string name="tile_on">روشن</string>
+    <string name="share">اشتراک‌گذاری</string>
+    <string name="saved_to_downloads">در پوشهٔ بارگیری‌ها ذخیره شد</string>
+</resources>

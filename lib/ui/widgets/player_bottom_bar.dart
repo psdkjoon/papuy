@@ -4,6 +4,7 @@ import 'package:papuy/localization/localization.dart';
 import 'package:papuy/player/player_controller.dart';
 import 'package:papuy/settings/loop_mode.dart';
 import 'package:papuy/theme/app_spacing.dart';
+import 'package:papuy/theme/app_theme.dart';
 
 class PlayerBottomBar extends StatelessWidget {
   const PlayerBottomBar({
@@ -17,9 +18,16 @@ class PlayerBottomBar extends StatelessWidget {
   final VoidCallback onSpeed;
   final VoidCallback onTracks;
 
-  Widget _button(IconData icon, String label, VoidCallback onPressed) {
+  Widget _button(
+    BuildContext context,
+    IconData icon,
+    String label,
+    VoidCallback onPressed,
+  ) {
     return TextButton.icon(
-      style: TextButton.styleFrom(foregroundColor: Colors.white),
+      style: TextButton.styleFrom(
+        foregroundColor: Theme.of(context).extension<StatusColors>()!.onScrim,
+      ),
       icon: Icon(icon),
       label: Text(label),
       onPressed: onPressed,
@@ -29,7 +37,9 @@ class PlayerBottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final label = theme.textTheme.labelMedium?.copyWith(color: Colors.white);
+    final label = theme.textTheme.labelMedium?.copyWith(
+      color: theme.extension<StatusColors>()!.onScrim,
+    );
     final total = (controller.durationMs > 0 ? controller.durationMs : 1) / 1000.0;
     final current = (controller.position.inMilliseconds / 1000.0)
         .clamp(0.0, total)
@@ -95,16 +105,19 @@ class PlayerBottomBar extends StatelessWidget {
                 child: Row(
                   children: [
                     _button(
+                      context,
                       Icons.aspect_ratio_rounded,
                       controller.aspect.label,
                       controller.cycleAspect,
                     ),
                     _button(
+                      context,
                       Icons.speed_rounded,
                       '${controller.speedLabel}×',
                       onSpeed,
                     ),
                     _button(
+                      context,
                       repeat == LoopMode.one
                           ? Icons.repeat_one_rounded
                           : Icons.repeat_rounded,
@@ -112,16 +125,23 @@ class PlayerBottomBar extends StatelessWidget {
                       controller.cycleRepeat,
                     ),
                     _button(
+                      context,
                       Icons.screen_rotation_rounded,
                       'Rotate',
                       controller.cycleOrientation,
                     ),
                     _button(
+                      context,
                       Icons.lock_outline_rounded,
                       'Lock',
                       controller.toggleLock,
                     ),
-                    _button(Icons.subtitles_rounded, 'Tracks', onTracks),
+                    _button(
+                      context,
+                      Icons.subtitles_rounded,
+                      'Tracks',
+                      onTracks,
+                    ),
                   ],
                 ),
               ),

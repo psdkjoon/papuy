@@ -197,7 +197,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
           if (active)
             Text(
               formatDuration(left),
-              style: TextStyle(fontSize: 9, height: 1, color: scheme.primary),
+              style: theme.textTheme.labelSmall
+                  ?.copyWith(height: 1, color: scheme.primary),
             ),
         ],
       ),
@@ -231,8 +232,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
           },
         ),
         IconButton(
+          tooltip: 'Previous'.tr,
           iconSize: 32,
-          visualDensity: VisualDensity.compact,
           icon: const Icon(Icons.skip_previous_rounded),
           onPressed: () {
             _music.haptic();
@@ -240,6 +241,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
           },
         ),
         IconButton.filled(
+          tooltip: _music.playing ? 'Pause'.tr : 'Play'.tr,
           iconSize: 36,
           style: IconButton.styleFrom(
             fixedSize: const Size(_playButton, _playButton),
@@ -260,8 +262,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
           },
         ),
         IconButton(
+          tooltip: 'Next'.tr,
           iconSize: 32,
-          visualDensity: VisualDensity.compact,
           icon: const Icon(Icons.skip_next_rounded),
           onPressed: () {
             _music.haptic();

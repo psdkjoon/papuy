@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide Text, Icon;
 import 'package:papuy/localization/localization.dart';
 import 'package:papuy/player/music_controller.dart';
 import 'package:papuy/theme/app_motion.dart';
+import 'package:papuy/theme/app_spacing.dart';
 import 'package:papuy/ui/widgets/track_tile.dart';
 
 Future<void> showQueueSheet(BuildContext context, MusicController music) {
@@ -25,7 +26,12 @@ Future<void> showQueueSheet(BuildContext context, MusicController music) {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      0,
+                      AppSpacing.lg,
+                      AppSpacing.sm,
+                    ),
                     child: Text(
                       'Queue · ${music.queue.length}',
                       style: theme.textTheme.labelLarge
@@ -36,7 +42,9 @@ Future<void> showQueueSheet(BuildContext context, MusicController music) {
                     child: ReorderableListView.builder(
                       scrollController: controller,
                       buildDefaultDragHandles: false,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                      ),
                       itemCount: music.queue.length,
                       proxyDecorator: (child, index, animation) {
                         final lift = Curves.easeOut.transform(animation.value);
@@ -45,13 +53,13 @@ Future<void> showQueueSheet(BuildContext context, MusicController music) {
                           child: Material(
                             elevation: 8 * lift,
                             color: theme.colorScheme.surfaceContainerHigh,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadius.tile),
                             child: child,
                           ),
                         );
                       },
                       onReorderItem: (from, to) =>
-                          music.moveInQueue(from, to > from ? to - 1 : to),
+                          music.moveInQueue(from, to),
                       itemBuilder: (context, i) {
                         final item = music.queue[i];
                         final current = i == music.index;
@@ -67,7 +75,7 @@ Future<void> showQueueSheet(BuildContext context, MusicController music) {
                                 ? theme.colorScheme.primary
                                     .withValues(alpha: 0.12)
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadius.tile),
                           ),
                           child: Row(
                             children: [
@@ -83,7 +91,7 @@ Future<void> showQueueSheet(BuildContext context, MusicController music) {
                               ReorderableDragStartListener(
                                 index: i,
                                 child: const Padding(
-                                  padding: EdgeInsets.all(8),
+                                  padding: EdgeInsets.all(AppSpacing.md),
                                   child: Icon(Icons.drag_handle_rounded),
                                 ),
                               ),
@@ -97,11 +105,13 @@ Future<void> showQueueSheet(BuildContext context, MusicController music) {
                           direction: DismissDirection.endToStart,
                           onDismissed: (_) => music.removeAt(i),
                           background: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20),
+                            alignment: AlignmentDirectional.centerEnd,
+                            padding: const EdgeInsetsDirectional.only(
+                              end: AppSpacing.lg,
+                            ),
                             decoration: BoxDecoration(
                               color: theme.colorScheme.errorContainer,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.tile),
                             ),
                             child: Icon(
                               Icons.delete_outline_rounded,

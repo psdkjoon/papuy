@@ -36,6 +36,8 @@ class CatppuccinPalette {
   final Color text, subtext1, subtext0, overlay2, overlay1, overlay0;
   final Color surface2, surface1, surface0, base, mantle, crust;
 
+  static const String defaultAccent = 'mauve';
+
   static const List<String> accents = <String>[
     'rosewater',
     'flamingo',

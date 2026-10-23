@@ -106,9 +106,12 @@ class MusicController extends ChangeNotifier {
   void _maybeRestore() {
     if (_restored || library.status != LibraryStatus.ready) return;
     _restored = true;
-    if (!settings.musicRestore || hasTrack || WindowService.playerOpen.value) {
-      return;
-    }
+    if (!settings.musicRestore || WindowService.playerOpen.value) return;
+    _restoreQueue();
+  }
+
+  void _restoreQueue() {
+    if (hasTrack) return;
     final ids = (_prefs.getStringList('musicQueue') ?? const <String>[])
         .map(int.tryParse)
         .whereType<int>()
@@ -141,10 +144,18 @@ class MusicController extends ChangeNotifier {
     _prefs.remove('musicPosition');
   }
 
-  Future<void> playQueue(List<TrackItem> tracks, int start) async {
+  Future<void> playQueue(
+    List<TrackItem> tracks,
+    int start, {
+    bool resume = false,
+  }) async {
     if (tracks.isEmpty) return;
-    _original = List<TrackItem>.of(tracks);
     final first = tracks[start.clamp(0, tracks.length - 1).toInt()];
+    if (resume && track == first) {
+      await _continueCurrent();
+      return;
+    }
+    _original = List<TrackItem>.of(tracks);
     if (shuffle) {
       queue = _shuffled(_original, first);
       index = 0;
@@ -286,11 +297,11 @@ class MusicController extends ChangeNotifier {
   bool _polling = false;
 
   Future<void> _poll() async {
-    if (_polling || _disposed || !hasTrack || loading) return;
+    if (_polling || _disposed || !hasTrack || loading || _pendingOpen) return;
     _polling = true;
     final snapshot = await PlayerService.snapshot();
     _polling = false;
-    if (snapshot == null || _disposed) return;
+    if (snapshot == null || _disposed || _pendingOpen) return;
     final sleep = sleepAt;
     final wasPlaying = playing;
     if (sleep != null && DateTime.now().isAfter(sleep)) {
@@ -320,7 +331,46 @@ class MusicController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _libraryReady() async {
+    if (library.status == LibraryStatus.ready) return;
+    if (library.status != LibraryStatus.loading) {
+      unawaited(library.load());
+    }
+    final done = Completer<void>();
+    void check() {
+      if (library.status != LibraryStatus.loading && !done.isCompleted) {
+        done.complete();
+      }
+    }
+
+    library.addListener(check);
+    try {
+      await done.future.timeout(const Duration(seconds: 20));
+    } on TimeoutException {
+      return;
+    } finally {
+      library.removeListener(check);
+    }
+  }
+
+  Future<void> resumeFromSystem() async {
+    if (loading || playing || WindowService.playerOpen.value) return;
+    if (!hasTrack) {
+      await _libraryReady();
+      if (_disposed) return;
+      _restored = true;
+      _restoreQueue();
+      if (!hasTrack) return;
+    }
+    if (loading || playing) return;
+    await _open(startMs: position.inMilliseconds);
+  }
+
   void _onCommand(String name) {
+    if (name == 'play') {
+      unawaited(resumeFromSystem());
+      return;
+    }
     if (!hasTrack) return;
     switch (name) {
       case 'next':
@@ -337,7 +387,18 @@ class MusicController extends ChangeNotifier {
   }
 
   void _onVideoOpened() {
-    if (WindowService.playerOpen.value && hasTrack) unawaited(stop());
+    if (!WindowService.playerOpen.value || !hasTrack) return;
+    _generation++;
+    _poller?.cancel();
+    _poller = null;
+    if (!_pendingOpen) unawaited(PlayerService.pause());
+    _persist();
+    _pendingOpen = true;
+    loading = false;
+    failed = false;
+    playing = false;
+    notifyListeners();
+    unawaited(WindowService.setBackground(on: false));
   }
 
   Future<void> togglePlay() async {
@@ -420,8 +481,16 @@ class MusicController extends ChangeNotifier {
 
   Future<void> jumpTo(int target) async {
     if (target < 0 || target >= queue.length) return;
+    if (target == index) {
+      await _continueCurrent();
+      return;
+    }
     index = target;
     await _open();
+  }
+
+  Future<void> _continueCurrent() async {
+    if (!playing) await togglePlay();
   }
 
   Future<void> seekTo(Duration target) async {

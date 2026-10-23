@@ -78,6 +78,14 @@ object MediaChannel {
                     (call.argument<Number>("id") ?: 0).toLong(),
                     (call.argument<Number>("albumId") ?: 0).toLong(),
                     (call.argument<Number>("size") ?: 256).toInt(),
+                    call.argument<String>("uri") ?: "",
+                )
+            }
+            "savePlaylist" -> background(result) {
+                savePlaylist(
+                    call.argument<String>("name") ?: "playlist",
+                    call.argument<String>("text") ?: "",
+                    call.argument<Boolean>("share") == true,
                 )
             }
             "thumbnail" -> background(result) {
@@ -201,6 +209,7 @@ object MediaChannel {
             MediaStore.Audio.Media.SIZE,
             MediaStore.Audio.Media.DATE_ADDED,
             MediaStore.Audio.Media.TRACK,
+            MediaStore.Audio.Media.DATA,
         )
         val rows = ArrayList<Map<String, Any>>()
         appContext.contentResolver.query(
@@ -220,6 +229,7 @@ object MediaChannel {
             val size = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
             val added = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED)
             val track = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)
+            val data = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
             while (cursor.moveToNext()) {
                 val trackId = cursor.getLong(id)
                 rows.add(
@@ -234,6 +244,7 @@ object MediaChannel {
                         "size" to cursor.getLong(size),
                         "added" to cursor.getLong(added),
                         "track" to cursor.getInt(track),
+                        "path" to (cursor.getString(data) ?: ""),
                         "uri" to ContentUris.withAppendedId(collection, trackId).toString(),
                     ),
                 )
@@ -248,19 +259,70 @@ object MediaChannel {
     }
 
     @Suppress("DEPRECATION")
-    private fun albumArt(id: Long, albumId: Long, size: Int): ByteArray? {
+    private fun albumArt(id: Long, albumId: Long, size: Int, uriText: String): ByteArray? {
         val resolver = appContext.contentResolver
-        val bitmap: Bitmap? = if (Build.VERSION.SDK_INT >= 29) {
-            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
-            resolver.loadThumbnail(uri, Size(size, size), null)
+        val source = if (id >= 0) {
+            ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
         } else {
+            Uri.parse(uriText)
+        }
+        var bitmap: Bitmap? = null
+        if (id >= 0 && Build.VERSION.SDK_INT >= 29) {
+            bitmap = try {
+                resolver.loadThumbnail(source, Size(size, size), null)
+            } catch (_: Exception) {
+                null
+            }
+        }
+        if (bitmap == null) bitmap = embeddedArt(source, size)
+        if (bitmap == null && id >= 0 && albumId > 0 && Build.VERSION.SDK_INT < 29) {
             val art = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), albumId)
-            resolver.openInputStream(art)?.use { BitmapFactory.decodeStream(it) }
+            bitmap = try {
+                resolver.openInputStream(art)?.use { BitmapFactory.decodeStream(it) }
+            } catch (_: Exception) {
+                null
+            }
         }
         if (bitmap == null) return null
         val output = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, 85, output)
         return output.toByteArray()
+    }
+
+    private fun embeddedArt(source: Uri, size: Int): Bitmap? {
+        val retriever = MediaMetadataRetriever()
+        return try {
+            retriever.setDataSource(appContext, source)
+            val bytes = retriever.embeddedPicture ?: return null
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+            var sample = 1
+            while (bounds.outWidth / (sample * 2) >= size && bounds.outHeight / (sample * 2) >= size) {
+                sample *= 2
+            }
+            val options = BitmapFactory.Options().apply { inSampleSize = sample }
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+        } catch (_: Exception) {
+            null
+        } finally {
+            try {
+                retriever.release()
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun savePlaylist(name: String, text: String, share: Boolean): Boolean {
+        val safe = name.replace(Regex("[\\\\/:*?\"<>|]"), "_").trim().ifEmpty { "playlist" }
+        val file = "$safe.m3u8"
+        val bytes = text.toByteArray(Charsets.UTF_8)
+        if (!share) {
+            return FileService.saveToDownloads(appContext, bytes, file, "audio/x-mpegurl") != null
+        }
+        val folder = File(appContext.cacheDir, "exports").apply { mkdirs() }
+        val target = File(folder, file)
+        target.writeBytes(bytes)
+        return ShareService.shareFiles(appContext, listOf(target.absolutePath), "audio/x-mpegurl")
     }
 
     private fun thumbnail(id: Long, width: Int, height: Int): ByteArray? {

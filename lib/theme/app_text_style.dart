@@ -5,11 +5,13 @@ abstract class AppTextStyle {
   static const List<String> fontFallback = [
     'NotoSans',
     'NotoSansArabic',
+    'NotoSansJP',
   ];
 
   static String get fontFamily => switch (L10n.code) {
         'fa' => 'NotoSansArabic',
-        'ru' || 'ja' => 'NotoSans',
+        'ru' => 'NotoSans',
+        'ja' => 'NotoSansJP',
         _ => 'SpaceGrotesk',
       };
 
@@ -33,6 +35,7 @@ abstract class AppTextStyle {
   static TextStyle get bodySmall => _style(12, 400);
   static TextStyle get labelLarge => _style(14, 600);
   static TextStyle get labelMedium => _style(12, 600);
+  static TextStyle get labelSmall => _style(10, 600);
 
   static TextTheme get textTheme => TextTheme(
         headlineSmall: headlineSmall,
@@ -42,5 +45,6 @@ abstract class AppTextStyle {
         bodySmall: bodySmall,
         labelLarge: labelLarge,
         labelMedium: labelMedium,
+        labelSmall: labelSmall,
       );
 }

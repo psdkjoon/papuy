@@ -27,7 +27,9 @@ class VideoThumb extends StatelessWidget {
     final second = tints[(video.id + 1) % tints.length];
     final progress = library.progress(video);
     final watched = progress > 0 && progress < 1;
-    final heart = theme.extension<StatusColors>()!.heart;
+    final status = theme.extension<StatusColors>()!;
+    final heart = status.heart;
+    final scrim = status.scrim;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.tile),
@@ -78,7 +80,7 @@ class VideoThumb extends StatelessWidget {
                 bottom: watched ? AppSpacing.sm : AppSpacing.xxs,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.72),
+                    color: scrim.withValues(alpha: 0.72),
                     borderRadius: BorderRadius.circular(AppRadius.tile / 4),
                   ),
                   child: Padding(
@@ -88,7 +90,7 @@ class VideoThumb extends StatelessWidget {
                     child: Text(
                       formatDuration(video.duration),
                       style: theme.textTheme.labelMedium
-                          ?.copyWith(color: Colors.white),
+                          ?.copyWith(color: status.onScrim),
                     ),
                   ),
                 ),
@@ -101,7 +103,7 @@ class VideoThumb extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: _barHeight,
-                  backgroundColor: Colors.black.withValues(alpha: 0.35),
+                  backgroundColor: scrim.withValues(alpha: 0.35),
                 ),
               ),
           ],

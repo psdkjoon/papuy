@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">パプイ</string>
+    <string name="notification_channel">通知</string>
+    <string name="playback_channel">バックグラウンド再生</string>
+    <string name="playback_playing">再生中</string>
+    <string name="playback_paused">一時停止中</string>
+    <string name="playback_pause">一時停止</string>
+    <string name="playback_play">再生</string>
+    <string name="playback_next">次へ</string>
+    <string name="playback_previous">前へ</string>
+    <string name="playback_shuffle">シャッフル</string>
+    <string name="playback_repeat">リピート</string>
+    <string name="tile_off">オフ</string>
+    <string name="tile_busy">処理中…</string>
+    <string name="tile_on">オン</string>
+    <string name="share">共有</string>
+    <string name="saved_to_downloads">ダウンロードに保存しました</string>
+</resources>

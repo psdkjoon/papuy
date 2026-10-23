@@ -26,9 +26,21 @@ class KvStore {
     return KvStore._(file, values);
   }
 
-  String? getString(String key) => _values[key] as String?;
-  int? getInt(String key) => _values[key] as int?;
-  bool? getBool(String key) => _values[key] as bool?;
+  String? getString(String key) {
+    final value = _values[key];
+    return value is String ? value : null;
+  }
+
+  int? getInt(String key) {
+    final value = _values[key];
+    return value is num ? value.toInt() : null;
+  }
+
+  bool? getBool(String key) {
+    final value = _values[key];
+    return value is bool ? value : null;
+  }
+
   List<String>? getStringList(String key) {
     final value = _values[key];
     return value is List ? value.whereType<String>().toList() : null;
@@ -39,6 +51,14 @@ class KvStore {
   void setBool(String key, bool value) => _put(key, value);
   void setStringList(String key, List<String> value) => _put(key, value);
   void remove(String key) => _put(key, null);
+
+  Future<void> flush() {
+    if (_flush?.isActive ?? false) {
+      _flush!.cancel();
+      _write();
+    }
+    return _writing;
+  }
 
   void _put(String key, Object? value) {
     if (value == null) {

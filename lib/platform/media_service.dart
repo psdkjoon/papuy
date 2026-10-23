@@ -62,11 +62,17 @@ abstract class MediaService {
     return rows ?? <Map<Object?, Object?>>[];
   }
 
-  static Future<Uint8List?> albumArt(int id, int albumId, int size) =>
-      _call<Uint8List>('albumArt', <String, int>{
+  static Future<Uint8List?> albumArt(
+    int id,
+    int albumId,
+    int size,
+    String uri,
+  ) =>
+      _call<Uint8List>('albumArt', <String, Object>{
         'id': id,
         'albumId': albumId,
         'size': size,
+        'uri': uri,
       });
 
   static Future<Uint8List?> thumbnail(int id) =>
@@ -102,4 +108,16 @@ abstract class MediaService {
     if (text is! String) return null;
     return (name: (map['name'] as String?) ?? '', text: text);
   }
+
+  static Future<bool> savePlaylist(
+    String name,
+    String text, {
+    required bool share,
+  }) async =>
+      await _call<bool>('savePlaylist', <String, Object>{
+        'name': name,
+        'text': text,
+        'share': share,
+      }) ??
+      false;
 }

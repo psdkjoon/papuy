@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -34,12 +35,15 @@ class PlaybackService : Service() {
                 startForeground(NOTIFICATION_ID, notification)
             }
         } catch (_: RuntimeException) {
+            running = false
             stopSelf()
         }
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
+        running = false
+        WidgetState.clear(applicationContext)
         releaseSession()
         if (Build.VERSION.SDK_INT >= 24) {
             stopForeground(STOP_FOREGROUND_REMOVE)
@@ -87,6 +91,19 @@ class PlaybackService : Service() {
             if (update.artChanged) {
                 art = update.art?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
             }
+            WidgetState.set(
+                context,
+                info.title,
+                info.artist,
+                info.album,
+                PlayerChannel.isPlaying(),
+                info.shuffle,
+                info.repeat,
+                info.durationMs,
+                if (PlayerChannel.hasPlayer()) PlayerChannel.position() else info.positionMs,
+                art,
+                update.artChanged,
+            )
             if (running) {
                 refresh(context)
                 return
@@ -107,6 +124,7 @@ class PlaybackService : Service() {
         fun stop(context: Context) {
             if (!running) return
             running = false
+            WidgetState.clear(context)
             context.stopService(Intent(context, PlaybackService::class.java))
         }
 
@@ -114,6 +132,28 @@ class PlaybackService : Service() {
             if (!running) return
             val manager = context.getSystemService(NotificationManager::class.java) ?: return
             manager.notify(NOTIFICATION_ID, build(context))
+            WidgetState.set(
+                context,
+                info.title,
+                info.artist,
+                info.album,
+                PlayerChannel.isPlaying(),
+                info.shuffle,
+                info.repeat,
+                info.durationMs,
+                if (PlayerChannel.hasPlayer()) PlayerChannel.position() else info.positionMs,
+                null,
+                false,
+            )
+        }
+
+        fun resumeFromButton(context: Context) {
+            if (PlayerChannel.hasPlayer()) {
+                PlayerChannel.resume()
+                refresh(context)
+            } else {
+                WindowChannel.requestCommand(context, "play")
+            }
         }
 
         private fun releaseSession() {
@@ -132,7 +172,7 @@ class PlaybackService : Service() {
             created.setCallback(
                 object : MediaSession.Callback() {
                     override fun onPlay() {
-                        PlayerChannel.resume()
+                        resumeFromButton(context.applicationContext)
                     }
 
                     override fun onPause() {
@@ -162,6 +202,15 @@ class PlaybackService : Service() {
                         }
                     }
                 },
+            )
+            created.setMediaButtonReceiver(
+                PendingIntent.getBroadcast(
+                    context.applicationContext,
+                    7,
+                    Intent(Intent.ACTION_MEDIA_BUTTON)
+                        .setComponent(ComponentName(context.applicationContext, MediaButtonReceiver::class.java)),
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                ),
             )
             created.isActive = true
             session = created
